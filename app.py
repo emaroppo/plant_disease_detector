@@ -2,6 +2,8 @@ import streamlit as st
 from PIL import Image
 from torchvision import transforms
 import json
+import torch
+from classes.models.PlantDiseaseCNN import PlantDiseaseCNN
 
 with open("data/species_to_idx.json", "r") as f:
     species_to_idx = json.load(f)
@@ -15,8 +17,6 @@ state_dict_path = st.selectbox(
     index=0,
 )
 # Load the model
-import torch
-from classes.models.PlantDiseaseCNN import PlantDiseaseCNN
 
 
 @st.cache_resource
