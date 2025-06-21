@@ -50,21 +50,9 @@ if st.button("Predict"):
         img_tensor = transforms.ToTensor()(img).unsqueeze(0)
 
         # Convert species to one-hot encoding
-        species_idx = {
-            "Apple": 0,
-            "Blueberry": 1,
-            "Cherry": 2,
-            "Corn": 3,
-            "Grape": 4,
-            "Peach": 5,
-            "Pepper": 6,
-            "Potato": 7,
-            "Raspberry": 8,
-            "Soybean": 9,
-            "Squash": 10,
-            "Strawberry": 11,
-            "Tomato": 12,
-        }[species]
+
+        species_idx = species_to_idx[species]
+
         species_one_hot = (
             torch.nn.functional.one_hot(torch.tensor(species_idx), num_classes=14)
             .float()
