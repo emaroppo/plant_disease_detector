@@ -7,7 +7,7 @@ import json
 from classes.models.PlantDiseaseCNN import PlantDiseaseCNN
 from classes.PlantDiseaseDataset import PlantDiseaseDataset
 
-root_dir = "data/PlantVillage/segmented"
+root_dir = "data/PlantVillage/"
 
 with open("data/species_to_idx.json", "r") as f:
     species_to_idx = json.load(f)
@@ -35,15 +35,15 @@ def train_model(model, dataset):
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=128, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=128, shuffle=True)
 
     model.train_model(
         train_dataloader,
         val_dataloader,
         loss_fn=nn.CrossEntropyLoss(),
         optimizer=optim.Adam(model.parameters(), lr=0.001),
-        num_epochs=10,  # starts overfitting early maybe prune or l
+        num_epochs=5,
         device="cuda:0" if torch.cuda.is_available() else "cpu",
     )
 
