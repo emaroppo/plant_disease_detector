@@ -11,15 +11,18 @@ class PlantDiseaseCNN(nn.Module):
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
         self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
+        #batch normalization layer
+        #dropout layer
 
         # Pooling layer
         self.pool = nn.MaxPool2d(2, 2)
 
-        self.fc1 = nn.Linear(64 * 32 * 32 + num_species, 512)
-        self.fc2 = nn.Linear(512, num_diseases)
-
-        # Dropout layer
-        self.dropout = nn.Dropout(0.5)
+        self.fc1 = nn.Linear(64 * 32 * 32 + num_species, 128)
+        # Batch normalization layer
+        
+        self.fc2 = nn.Linear(128, 128)
+        # Final output layer for diseases
+        self.fc3 = nn.Linear(128, num_diseases)
 
     def forward(self, x, species):
         # Image feature extraction
@@ -29,15 +32,14 @@ class PlantDiseaseCNN(nn.Module):
 
         # Flatten the image
         x = x.view(-1, 64 * 32 * 32)
-        x = self.dropout(x)
 
         # Concatenate the one-hot encoded species vector directly with the flattened image features
         x = torch.cat((x, species), dim=1)
 
         # Fully connected layers
         x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
 
     def train_model(
@@ -46,7 +48,7 @@ class PlantDiseaseCNN(nn.Module):
         validation_dataloader,
         loss_fn,
         optimizer,
-        num_epochs=10,
+        num_epochs=5,
         device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
     ):
         self.to(device)
@@ -58,6 +60,7 @@ class PlantDiseaseCNN(nn.Module):
             total_predictions = 0
 
             for batch, (images, species, labels) in enumerate(dataloader):
+                print(f"Processing batch {batch + 1}/{len(dataloader)}")
                 images = images.to(device)
                 species = (
                     F.one_hot(species, num_classes=14).to(torch.float32).to(device)
@@ -93,6 +96,10 @@ class PlantDiseaseCNN(nn.Module):
                 writer.add_scalar("Validation Loss", val_loss, epoch)
                 writer.add_scalar("Validation Accuracy", val_accuracy, epoch)
                 print(f"Validation Loss: {val_loss:.4f}, Accuracy: {val_accuracy:.2f}%")
+
+            #save checkpoint
+            torch.save(self.state_dict(), f"model_epoch_{epoch + 1}.pth")
+        print("Training complete")
 
         writer.close()
 
