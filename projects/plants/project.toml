@@ -1,0 +1,74 @@
+# One labelling job: PlantVillage, as species and disease together.
+#
+# Both halves live in one label set on purpose. The species is a fact about
+# the sample that a model may be told; the disease is what it is asked for.
+# Which is which is a question about the job, and today strata has no way to
+# say it — a model reads its target and decides for itself. That is the gap
+# arm C needs closed.
+
+name = "plants"
+
+[label_config]
+template = "image_classification"
+# Multi-label: every sample asserts exactly two of these, its species and
+# its disease. 'healthy' is one of the 21 disease values rather than the
+# absence of one — a leaf someone looked at and found well is an answer.
+choice = "multiple"
+classes = [
+    # Species (14)
+    "Apple",
+    "Blueberry",
+    "Cherry_(including_sour)",
+    "Corn_(maize)",
+    "Grape",
+    "Orange",
+    "Peach",
+    "Pepper,_bell",
+    "Potato",
+    "Raspberry",
+    "Soybean",
+    "Squash",
+    "Strawberry",
+    "Tomato",
+    # Disease, including healthy (21)
+    "Apple_scab",
+    "Bacterial_spot",
+    "Black_rot",
+    "Cedar_apple_rust",
+    "Cercospora_leaf_spot Gray_leaf_spot",
+    "Common_rust_",
+    "Early_blight",
+    "Esca_(Black_Measles)",
+    "Haunglongbing_(Citrus_greening)",
+    "Late_blight",
+    "Leaf_Mold",
+    "Leaf_blight_(Isariopsis_Leaf_Spot)",
+    "Leaf_scorch",
+    "Northern_Leaf_Blight",
+    "Powdery_mildew",
+    "Septoria_leaf_spot",
+    "Spider_mites Two-spotted_spider_mite",
+    "Target_Spot",
+    "Tomato_Yellow_Leaf_Curl_Virus",
+    "Tomato_mosaic_virus",
+    "healthy",
+]
+
+[data]
+type = "image"
+source_root = "data/source"
+root = "data/raw"
+# Named rather than inferred. Resolution reads the first file in sorted
+# order, and this corpus holds four extensions, so naming it removes the
+# question entirely.
+preparer = "plantvillage"
+
+[catalog]
+label_set = "plants"
+collections = ["plantvillage"]
+
+[model]
+ref = "plant-disease"
+
+[model.params]
+arm = "flat"

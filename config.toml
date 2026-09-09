@@ -1,0 +1,21 @@
+# Where things are, on this machine. Committed here rather than gitignored
+# because this demo's answer is "nothing installed": a SQLite index and a
+# directory of blobs under the checkout, so a fresh clone runs the loop with
+# no database, no object store and no Label Studio.
+#
+# Strata's own config.toml is gitignored, and should be — it names a real
+# host. This one names nothing.
+
+[catalog]
+root = "catalog"
+# Empty: SQLite under root. Point at Postgres to share the index.
+url = ""
+# Empty: files under root. An endpoint means tar shards in a bucket.
+s3_endpoint = ""
+
+# Training happens in this process. A URL sends rounds to the GPU host —
+# which is why the model is a registered entry point rather than a file
+# reference: the host resolves it by name, and cannot resolve a path on
+# this machine.
+[modelling]
+url = ""

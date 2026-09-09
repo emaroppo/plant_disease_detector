@@ -1,28 +1,38 @@
-# The corpus. Large, and somebody else's: PlantVillage is CC-BY-SA-3.0 and
-# is fetched by scripts/download_corpus.py rather than vendored here. The
-# leaf mapping is the same data under the same licence, so it is fetched too
-# rather than committed.
-/data/source/
-/data/download/
-/data/raw/
-/data/extract/
-/data/leaf-map.json
-# A pre-port symlink to the corpus on another volume
-/data/PlantVillage
+# Anchoring matters here. A pattern containing a slash anywhere but the end
+# is relative to this file's directory, so `data/raw/` matches /data/raw and
+# NOT projects/plants/data/raw — which is where a project's payload actually
+# lives. Payload directories are therefore either anchored deliberately or
+# written as a single component, which matches at any depth.
 
-# Scratch notes, untracked since the first commit
-notes.txt
+# The corpus. Large, and somebody else's: PlantVillage is CC-BY-SA-3.0,
+# fetched by scripts/download_corpus.py rather than vendored. The leaf
+# mapping is the same data under the same licence.
+/data/
+/projects/*/data/
+leaf-map.json
 
-# Project payload, same rules as strata's own: a materialised dataset and a
-# run store are outputs, not sources.
+# The local catalog: the SQLite index and the blobs beside it.
+/catalog/
+/catalog-*/
+
+# A real host's config: LAN addresses and bucket names describe a machine,
+# not this project. config.toml stays committed because it names nothing.
+config.local.toml
+config.*.local.toml
+
+# Project payload — outputs, not sources. Single components, so they match
+# wherever a project lives.
 datasets/
 runs/
 checkpoints/
 .state/
 
-# Legacy layout — checkpoints were written beside the code
+# Legacy layout: checkpoints beside the code.
 *.pth
 model_runs/
+
+# Scratch notes, untracked since the first commit
+notes.txt
 
 __pycache__/
 *.pyc

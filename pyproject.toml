@@ -12,6 +12,9 @@ dependencies = [
 
 [project.optional-dependencies]
 model = ["strata-modelling[image]"]
+# Driving the loop. The CLI lives in strata-labeller, which also carries the
+# Label Studio SDK — so a run that never opens Label Studio still installs it.
+cli = ["strata-labeller"]
 test = ["pytest>=8.0", "strata-catalog[test]", "strata-modelling[test]"]
 
 # What this adds to a catalog it is installed beside. Registered the same way
@@ -35,6 +38,7 @@ plant-disease = "plant_disease.model:PlantDiseaseClassifier"
 strata-labels = { path = "../../tools/auto-labeller/packages/labels", editable = true }
 strata-catalog = { path = "../../tools/auto-labeller/packages/catalog", editable = true }
 strata-modelling = { path = "../../tools/auto-labeller/packages/modelling", editable = true }
+strata-labeller = { path = "../../tools/auto-labeller/packages/labeller", editable = true }
 
 [build-system]
 requires = ["hatchling"]
