@@ -80,7 +80,7 @@ ref = "plant-disease"
 # composite the paper used. 'disease' is arm B, the same trunk with no
 # species information at all. They must not be compared on one axis — the
 # class counts differ, so the gap between them is arithmetic.
-arm = "flat"
+arm = "disease"
 # The species half of the label set, restated because the label set cannot
 # say which of its 35 classes are species. Kept in the same order as the
 # classes list above, so a diff shows a drift between the two.
