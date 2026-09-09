@@ -118,6 +118,7 @@ class PlantDiseaseClassifier(Model):
         weight_decay: float = 1e-4,
         dropout: float = 0.75,
         image_size: int = 256,
+        num_workers: int = 0,
         device: str | None = None,
     ):
         if arm not in ("flat", "disease"):
@@ -130,6 +131,10 @@ class PlantDiseaseClassifier(Model):
         self.weight_decay = weight_decay
         self.dropout = dropout
         self.image_size = image_size
+        # Decoding and resizing 54,000 JPEGs is the actual cost of an epoch
+        # here; the network is small enough that a single loader thread
+        # starves it. Zero by default so the test suite stays in one process.
+        self.num_workers = num_workers
         self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
 
         self.classes: list[str] = []
@@ -211,6 +216,7 @@ class PlantDiseaseClassifier(Model):
             _Images([p for p, _ in usable], [index[t] for _, t in usable], self._transform()),
             batch_size=self.batch_size,
             shuffle=True,
+            num_workers=self.num_workers,
         )
         optimiser = torch.optim.Adam(
             self.net.parameters(), lr=self.lr, weight_decay=self.weight_decay
@@ -257,6 +263,7 @@ class PlantDiseaseClassifier(Model):
         loader = DataLoader(
             _Images([p for p, _ in usable], [index[t] for _, t in usable], self._transform()),
             batch_size=self.batch_size,
+            num_workers=self.num_workers,
         )
         self.net.eval()
         correct = seen = 0.0
@@ -277,7 +284,11 @@ class PlantDiseaseClassifier(Model):
         if self.net is None:
             raise ValueError("This model has not been trained or loaded")
 
-        loader = DataLoader(_Images(paths, None, self._transform()), batch_size=self.batch_size)
+        loader = DataLoader(
+            _Images(paths, None, self._transform()),
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
         self.net.eval()
         out: list[ChoicesPrediction] = []
         with torch.no_grad():

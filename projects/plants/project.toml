@@ -76,4 +76,36 @@ collections = ["plantvillage"]
 ref = "plant-disease"
 
 [model.params]
+# 'flat' is arm A: one head over every (species, disease) pair, the 38-way
+# composite the paper used. 'disease' is arm B, the same trunk with no
+# species information at all. They must not be compared on one axis — the
+# class counts differ, so the gap between them is arithmetic.
 arm = "flat"
+# The species half of the label set, restated because the label set cannot
+# say which of its 35 classes are species. Kept in the same order as the
+# classes list above, so a diff shows a drift between the two.
+species = [
+    "Apple",
+    "Blueberry",
+    "Cherry_(including_sour)",
+    "Corn_(maize)",
+    "Grape",
+    "Orange",
+    "Peach",
+    "Pepper,_bell",
+    "Potato",
+    "Raspberry",
+    "Soybean",
+    "Squash",
+    "Strawberry",
+    "Tomato",
+]
+epochs = 10
+batch_size = 64
+image_size = 256
+# Decoding 43,000 JPEGs an epoch is the real cost; the network is small
+# enough that one loader thread starves the GPU.
+num_workers = 8
+dropout = 0.75
+lr = 0.001
+weight_decay = 0.0001
