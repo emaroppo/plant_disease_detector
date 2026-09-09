@@ -50,17 +50,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument("--config", type=Path, default=Path("config.toml"))
-    parser.add_argument(
-        "--apply", action="store_true", help="Write; otherwise report only"
-    )
+    parser.add_argument("--apply", action="store_true", help="Write; otherwise report only")
     args = parser.parse_args(argv)
 
     project = Project.load(args.project)
     index = PreparedIndex.load(project.data_dir)
     if index is None:
         print(
-            f"No prepared corpus under {project.data_dir}; run "
-            f"'auto-labeller prepare' first.",
+            f"No prepared corpus under {project.data_dir}; run 'auto-labeller prepare' first.",
             file=sys.stderr,
         )
         return 1
