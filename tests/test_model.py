@@ -153,3 +153,47 @@ def test_the_checkpoint_carries_the_arm_and_the_species(tmp_path):
     assert restored.arm == "flat"
     assert restored.species == SPECIES
     assert restored.image_size == 32
+
+
+# -- warm starts --------------------------------------------------------
+
+
+def _classes():
+    return list(SPECIES) + sorted({d for _, d in PAIRS})
+
+
+def test_a_warm_start_keeps_the_loaded_network(tmp_path):
+    """Rebuilding here would train from scratch and call it a warm round."""
+    examples = _examples(tmp_path, with_species=True)
+    model = _model(arm="flat", species=SPECIES)
+    model.finetune(examples, _classes())
+    checkpoint = tmp_path / "checkpoint.pt"
+    model.save(checkpoint)
+
+    warm = _model(arm="flat", species=SPECIES)
+    warm.load(checkpoint)
+    loaded = warm.net
+    warm.finetune(examples, _classes())
+
+    assert warm.net is loaded, "finetune rebuilt the net, discarding the warm start"
+
+
+def test_warm_starting_across_a_change_of_arm_is_refused(tmp_path):
+    """The heads are different sizes, so the weights cannot carry over."""
+    examples = _examples(tmp_path, with_species=True)
+    flat = _model(arm="flat", species=SPECIES)
+    flat.finetune(examples, _classes())
+    checkpoint = tmp_path / "checkpoint.pt"
+    flat.save(checkpoint)
+
+    other = _model(arm="disease", species=SPECIES)
+    other.load(checkpoint)
+    with pytest.raises(ValueError, match="warm-started"):
+        other.finetune(examples, _classes())
+
+
+def test_a_cold_model_of_the_same_arm_still_trains(tmp_path):
+    """The guard must not fire when nothing was loaded."""
+    examples = _examples(tmp_path, with_species=True)
+    model = _model(arm="disease", species=SPECIES)
+    assert isinstance(model.finetune(examples, _classes()), dict)

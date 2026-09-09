@@ -124,6 +124,11 @@ class PlantDiseaseClassifier(Model):
         if arm not in ("flat", "disease"):
             raise ValueError(f"Unknown arm {arm!r}; expected 'flat' or 'disease'")
         self.arm = arm
+        #: What the project asked for. Kept apart from :attr:`arm` because
+        #: :meth:`load` adopts the checkpoint's arm — it has to, since a
+        #: checkpoint is restored into a default-constructed model that
+        #: cannot know what it was. :meth:`finetune` compares the two.
+        self._requested_arm = arm
         self.species = tuple(species)
         self.epochs = epochs
         self.batch_size = batch_size
@@ -193,6 +198,17 @@ class PlantDiseaseClassifier(Model):
         val: list[Example] | None = None,
         on_epoch: EpochReport | None = None,
     ) -> dict[str, float]:
+        # Refused before the round rather than during it. A warm start
+        # across a change of arm restores a head of the wrong size for the
+        # job asked for, and every number the round reported afterwards
+        # would be about the other arm.
+        if self.arm != self._requested_arm:
+            raise ValueError(
+                f"This round asked for arm {self._requested_arm!r}, but warm-started "
+                f"from a checkpoint trained as {self.arm!r}. The two learn different "
+                f"heads — one class per (species, disease) pair against one per "
+                f"disease — so the weights cannot carry over. Train fresh instead."
+            )
         self.classes = list(classes)
 
         encoded = [(e.path, self._encode(e.target.values)) for e in train]
@@ -210,7 +226,13 @@ class PlantDiseaseClassifier(Model):
         if not self.vocab:
             self.vocab = sorted({t for _, t in usable})
         index = {token: i for i, token in enumerate(self.vocab)}
-        self.net = _Net(len(self.vocab), self.image_size, self.dropout).to(self.device)
+        # Keep a loaded network when it still fits what is being learned;
+        # that is the whole of a warm start. Rebuilding here unconditionally
+        # meant a warm round trained from scratch and said nothing about it,
+        # which reads in the run store as a warm start that did not help.
+        if self.net is None or self.net.fc3.out_features != len(self.vocab):
+            self.net = _Net(len(self.vocab), self.image_size, self.dropout)
+        self.net = self.net.to(self.device)
 
         loader = DataLoader(
             _Images([p for p, _ in usable], [index[t] for _, t in usable], self._transform()),
