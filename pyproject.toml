@@ -1,0 +1,55 @@
+[project]
+name = "plant-disease-detector"
+version = "0.1.0"
+description = "Plant disease classification on the strata catalog: a preparer and a model, both plugins"
+requires-python = ">=3.13"
+# Only what reading a corpus needs. The model brings the framework, under
+# its own extra, so a host that just prepares and ingests installs no torch.
+dependencies = [
+    "strata-catalog",
+    "strata-labels",
+]
+
+[project.optional-dependencies]
+model = ["strata-modelling[image]"]
+test = ["pytest>=8.0", "strata-catalog[test]", "strata-modelling[test]"]
+
+# What this adds to a catalog it is installed beside. Registered the same way
+# the first-party converters are — the point of the exercise is that a project
+# outside the workspace extends it through the same surface.
+[project.entry-points."strata.preparers"]
+plantvillage = "plant_disease.preparer:PlantVillagePreparer"
+
+# Named here rather than referenced as a file, because a direct 'model.py:Class'
+# reference is refused over the wire: the host serving a round cannot resolve a
+# path on the caller's machine. Registering it is what lets the GPU host train.
+[project.entry-points."strata.models"]
+plant-disease = "plant_disease.model:PlantDiseaseClassifier"
+
+# Local paths while strata is one unpublished workspace. This is the honest
+# state of the plugin story today: a project outside the workspace cannot
+# depend on strata by name because nothing is published, so it depends on a
+# filesystem layout instead. Replaced by version constraints once the packages
+# are split into repos and released.
+[tool.uv.sources]
+strata-labels = { path = "../../tools/auto-labeller/packages/labels", editable = true }
+strata-catalog = { path = "../../tools/auto-labeller/packages/catalog", editable = true }
+strata-modelling = { path = "../../tools/auto-labeller/packages/modelling", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plant_disease"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

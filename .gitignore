@@ -1,0 +1,31 @@
+# The corpus. Large, and somebody else's: PlantVillage is CC-BY-SA-3.0 and
+# is fetched by scripts/download_corpus.py rather than vendored here. The
+# leaf mapping is the same data under the same licence, so it is fetched too
+# rather than committed.
+/data/source/
+/data/download/
+/data/raw/
+/data/extract/
+/data/leaf-map.json
+# A pre-port symlink to the corpus on another volume
+/data/PlantVillage
+
+# Scratch notes, untracked since the first commit
+notes.txt
+
+# Project payload, same rules as strata's own: a materialised dataset and a
+# run store are outputs, not sources.
+datasets/
+runs/
+checkpoints/
+.state/
+
+# Legacy layout — checkpoints were written beside the code
+*.pth
+model_runs/
+
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
