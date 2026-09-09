@@ -6,7 +6,12 @@
 # Strata's own config.toml is gitignored, and should be — it names a real
 # host. This one names nothing.
 
-[catalog]
+# Named rather than left as the host's default, and the project names it back.
+# A demo has to be able to show what a catalog is: copy it, work offline,
+# merge the answers back, refuse a sample id issued by a different one. All of
+# that is per-catalog, so the demo owns one instead of borrowing a corner of
+# somebody else's.
+[catalog.demo]
 root = "catalog"
 # Empty: SQLite under root. Point at Postgres to share the index.
 url = ""

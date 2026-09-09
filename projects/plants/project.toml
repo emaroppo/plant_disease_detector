@@ -64,6 +64,11 @@ root = "data/raw"
 preparer = "plantvillage"
 
 [catalog]
+# Which catalog on this host, by the name it has in config.toml. Stated
+# rather than left to the host's default: a project moved to another machine
+# expects a catalog of this name there, and gets an error rather than
+# somebody else's corpus if there is none.
+name = "demo"
 label_set = "plants"
 collections = ["plantvillage"]
 
