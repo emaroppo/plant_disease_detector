@@ -15,6 +15,10 @@ model = ["strata-modelling[image]"]
 # Driving the loop. The CLI lives in strata-labeller, which also carries the
 # Label Studio SDK — so a run that never opens Label Studio still installs it.
 cli = ["strata-labeller"]
+# Shared storage. The base install keeps blobs as files under the catalog
+# root and needs nothing, which is what makes a fresh clone runnable; this
+# is what 'catalog-repack' needs to put them in a bucket instead.
+s3 = ["strata-catalog[s3]"]
 test = ["pytest>=8.0", "strata-catalog[test]", "strata-modelling[test]"]
 
 # What this adds to a catalog it is installed beside. Registered the same way
