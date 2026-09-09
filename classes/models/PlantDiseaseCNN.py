@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from tqdm import tqdm
 
 
 class PlantDiseaseCNN(nn.Module):
@@ -17,10 +19,12 @@ class PlantDiseaseCNN(nn.Module):
         # Pooling layer
         self.pool = nn.MaxPool2d(2, 2)
 
-        self.fc1 = nn.Linear(64 * 32 * 32 + num_species, 128)
-        # Batch normalization layer
+        self.fc1 = nn.Linear(64 * 32 * 32 + num_species, 64)
         
-        self.fc2 = nn.Linear(128, 128)
+        self.fc2 = nn.Linear(64, 128)
+
+        self.dropout = nn.Dropout(0.75)
+
         # Final output layer for diseases
         self.fc3 = nn.Linear(128, num_diseases)
 
@@ -38,7 +42,7 @@ class PlantDiseaseCNN(nn.Module):
 
         # Fully connected layers
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.dropout(F.relu(self.fc2(x)))
         x = self.fc3(x)
         return x
 
@@ -51,6 +55,8 @@ class PlantDiseaseCNN(nn.Module):
         num_epochs=5,
         device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
     ):
+
+        lr_schedule = ReduceLROnPlateau(optimizer, mode="max", factor=0.1, patience=5)
         self.to(device)
         writer = SummaryWriter()
         for epoch in range(num_epochs):
@@ -59,8 +65,8 @@ class PlantDiseaseCNN(nn.Module):
             correct_predictions = 0
             total_predictions = 0
 
-            for batch, (images, species, labels) in enumerate(dataloader):
-                print(f"Processing batch {batch + 1}/{len(dataloader)}")
+            for batch, (images, species, labels) in tqdm(enumerate(dataloader), total=len(dataloader), desc=f"Epoch {epoch + 1}/{num_epochs}"):
+
                 images = images.to(device)
                 species = (
                     F.one_hot(species, num_classes=14).to(torch.float32).to(device)
@@ -81,6 +87,8 @@ class PlantDiseaseCNN(nn.Module):
 
             epoch_loss = running_loss / len(dataloader)
             epoch_accuracy = 100 * correct_predictions / total_predictions
+
+            lr_schedule.step(epoch_accuracy)
 
             writer.add_scalar("Training Loss", epoch_loss, epoch)
             writer.add_scalar("Training Accuracy", epoch_accuracy, epoch)

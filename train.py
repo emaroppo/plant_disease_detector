@@ -35,15 +35,15 @@ def train_model(model, dataset):
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    train_dataloader = DataLoader(train_dataset, batch_size=128, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=128, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=512, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=512, shuffle=True)
 
     model.train_model(
         train_dataloader,
         val_dataloader,
         loss_fn=nn.CrossEntropyLoss(),
-        optimizer=optim.Adam(model.parameters(), lr=0.001),
-        num_epochs=5,
+        optimizer=optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001),
+        num_epochs=60,
         device="cuda:0" if torch.cuda.is_available() else "cpu",
     )
 
@@ -51,6 +51,10 @@ def train_model(model, dataset):
     torch.save(model.state_dict(), "model.pth")
 
 
-if __name__ == "__main__":
+def resume_training(model, dataset):
+    model.load_state_dict(torch.load("model_epoch_10.pth"))
     train_model(model, dataset)
-    print("Training complete and model saved as model.pth")
+
+
+if __name__ == "__main__":
+    train_model(model=model, dataset=dataset)
