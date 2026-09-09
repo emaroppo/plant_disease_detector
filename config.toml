@@ -6,6 +6,15 @@
 # Strata's own config.toml is gitignored, and should be — it names a real
 # host. This one names nothing.
 
+# **This describes a fresh catalog, not necessarily the one on your disk.**
+# Follow the README — download, prepare, ingest — and the blobs are files
+# under the catalog root, which is what makes a clone runnable with nothing
+# installed. Run `catalog-repack` and that stops being true: the index then
+# names tar shards, the local backend looks for one as a file, and every read
+# fails with a FileNotFoundError for a path ending in `.tar`. A host that has
+# repacked needs the endpoint, and it belongs in a gitignored config beside
+# this one — a LAN address describes a machine, not this project.
+#
 # Named rather than left as the host's default, and the project names it back.
 # A demo has to be able to show what a catalog is: copy it, work offline,
 # merge the answers back, refuse a sample id issued by a different one. All of
