@@ -197,3 +197,27 @@ def test_a_cold_model_of_the_same_arm_still_trains(tmp_path):
     examples = _examples(tmp_path, with_species=True)
     model = _model(arm="disease", species=SPECIES)
     assert isinstance(model.finetune(examples, _classes()), dict)
+
+
+def test_a_two_part_target_with_no_species_configured_is_refused(tmp_path):
+    """Otherwise it silently learns whichever half sorted first.
+
+    Observed for real: a round with `species` left out of [model.params]
+    trained a 14-class species classifier, reported val_accuracy 0.745, and
+    recorded it as a disease model.
+    """
+    examples = _examples(tmp_path, with_species=True)
+    model = _model(arm="disease")  # no species
+
+    with pytest.raises(ValueError, match="nothing to say which half is the target"):
+        model.finetune(examples, _classes())
+
+
+def test_a_single_part_target_needs_no_species(tmp_path):
+    """The unambiguous case still trains — the guard is about ambiguity."""
+    examples = _examples(tmp_path, with_species=False)
+    model = _model(arm="disease")
+
+    assert isinstance(
+        model.finetune(examples, ["Early_blight", "healthy", "Late_blight", "Leaf_Mold"]), dict
+    )

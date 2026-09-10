@@ -211,6 +211,24 @@ class PlantDiseaseClassifier(Model):
             )
         self.classes = list(classes)
 
+        # Without a species list there is nothing separating the two halves
+        # of a target, and _split would take whichever came first. On this
+        # corpus that is the species, so the round trains a species
+        # classifier, reports a confident number for it, and calls it a
+        # disease model. Caught here rather than in requires_schema because
+        # the label set permitting several classes is not the problem — a
+        # sample actually carrying several, with no way to tell them apart,
+        # is.
+        if not self.species:
+            ambiguous = sum(1 for e in train if len(e.target.values) > 1)
+            if ambiguous:
+                raise ValueError(
+                    f"{ambiguous:,} of {len(train):,} training sample(s) assert more "
+                    f"than one class, and no species were configured — so there is "
+                    f"nothing to say which half is the target. Set "
+                    f"[model.params] species."
+                )
+
         encoded = [(e.path, self._encode(e.target.values)) for e in train]
         usable = [(p, t) for p, t in encoded if t is not None]
         # A sample whose target this arm cannot represent is dropped rather
