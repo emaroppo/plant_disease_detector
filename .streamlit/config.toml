@@ -1,0 +1,10 @@
+# Pinned light, deliberately. The chart palette is validated against a light
+# surface (#fcfcfb) — lightness band, chroma floor, colour-vision separation
+# and contrast. Dark mode is not an automatic flip of those values; it is its
+# own set of steps, validated against the dark surface. Until that second set
+# is chosen and checked, letting the theme follow the OS would render an
+# unvalidated palette half the time.
+[theme]
+base = "light"
+backgroundColor = "#fcfcfb"
+textColor = "#0b0b0b"

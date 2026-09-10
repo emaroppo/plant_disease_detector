@@ -19,6 +19,9 @@ cli = ["strata-labeller"]
 # root and needs nothing, which is what makes a fresh clone runnable; this
 # is what 'catalog-repack' needs to put them in a bucket instead.
 s3 = ["strata-catalog[s3]"]
+# The dashboard. Reads the CLI's JSON rather than the run store, so it needs
+# the CLI too — and nothing here is imported by the plugins.
+dashboard = ["streamlit>=1.40", "altair>=5.0", "pandas>=2.0", "plant-disease-detector[cli]"]
 test = ["pytest>=8.0", "strata-catalog[test]", "strata-modelling[test]"]
 
 # What this adds to a catalog it is installed beside. Registered the same way
