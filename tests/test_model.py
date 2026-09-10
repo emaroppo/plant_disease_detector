@@ -221,3 +221,94 @@ def test_a_single_part_target_needs_no_species(tmp_path):
     assert isinstance(
         model.finetune(examples, ["Early_blight", "healthy", "Late_blight", "Leaf_Mold"]), dict
     )
+
+
+# -- the conditioned arm ------------------------------------------------
+
+
+def _conditioned(**kwargs):
+    return _model(arm="conditioned", species=SPECIES, **kwargs)
+
+
+def _with_features(tmp_path):
+    out = []
+    for i, (species, disease) in enumerate(PAIRS):
+        path = _image(tmp_path / f"{i}.jpg", (i * 60 % 256, 128, 200 - i * 40))
+        out.append(
+            Example(
+                path=path,
+                target=Choices(values=[species, disease]),
+                features={"species": [species]},
+            )
+        )
+    return out
+
+
+def test_the_conditioned_arm_shares_a_head_with_the_control(tmp_path):
+    """B and C differ by information, not by arithmetic.
+
+    Both choose among the same diseases, so the gap between their scores
+    means something. The flat arm chooses among pairs and does not.
+    """
+    examples = _with_features(tmp_path)
+    conditioned = _conditioned()
+    conditioned.finetune(examples, _classes())
+
+    control = _model(arm="disease", species=SPECIES)
+    control.finetune(examples, _classes())
+
+    assert conditioned.vocab == control.vocab
+
+
+def test_it_is_told_the_species_at_inference(tmp_path):
+    examples = _with_features(tmp_path)
+    model = _conditioned()
+    model.finetune(examples, _classes())
+    paths = [e.path for e in examples]
+
+    out = model.predict(paths, None, features=[e.features for e in examples])
+
+    assert len(out) == len(paths)
+    assert all(p.values[0] not in SPECIES for p in out)
+
+
+def test_predicting_without_being_told_is_refused(tmp_path):
+    """Not a zero vector. A zero vector is a vector, and the network reads
+    it as 'none of these' rather than as 'nobody said'."""
+    examples = _with_features(tmp_path)
+    model = _conditioned()
+    model.finetune(examples, _classes())
+
+    with pytest.raises(ValueError, match="one feature entry per path"):
+        model.predict([e.path for e in examples])
+
+
+def test_a_sample_with_no_species_is_refused_rather_than_blanked(tmp_path):
+    examples = _with_features(tmp_path)
+    examples[0] = Example(path=examples[0].path, target=examples[0].target, features={})
+    model = _conditioned()
+
+    with pytest.raises(ValueError, match="has none"):
+        model.finetune(examples, _classes())
+
+
+def test_a_species_outside_the_configured_list_is_refused(tmp_path):
+    """The two copies of one fact, caught when they drift."""
+    examples = _with_features(tmp_path)
+    examples[0] = Example(
+        path=examples[0].path,
+        target=examples[0].target,
+        features={"species": ["Aubergine"]},
+    )
+    model = _conditioned()
+
+    with pytest.raises(ValueError, match="drifted apart"):
+        model.finetune(examples, _classes())
+
+
+def test_the_conditioned_arm_needs_a_species_list(tmp_path):
+    examples = _with_features(tmp_path)
+    model = _model(arm="conditioned")  # no species configured
+
+    with pytest.raises(ValueError, match="needs the list of them"):
+        model.finetune(examples, _classes())

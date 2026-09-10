@@ -56,11 +56,25 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 #: so a composite is never mistaken for a folder name.
 _PAIR_SEP = "\x1f"
 
+#: ``flat`` predicts the (species, disease) pair from the image. ``disease``
+#: predicts the disease from the image alone. ``conditioned`` predicts the
+#: disease from the image *and* the species, which is the model this project
+#: wanted from the start: whoever owns the plant knows what it is, and needs
+#: to be told what is wrong with it.
+#:
+#: ``disease`` and ``conditioned`` share a head — the same 21 diseases — so
+#: the gap between them is information rather than arithmetic. ``flat``
+#: chooses among 38 and belongs on its own axis.
+ARMS = ("flat", "disease", "conditioned")
+
+#: The feature this model is told, by the name a project declares it under.
+SPECIES = "species"
+
 
 class _Net(nn.Module):
     """The original trunk, with the head sized by whatever it is learning."""
 
-    def __init__(self, outputs: int, image_size: int, dropout: float):
+    def __init__(self, outputs: int, image_size: int, dropout: float, extra: int = 0):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
@@ -70,36 +84,59 @@ class _Net(nn.Module):
         # than hardcoded at 32: the original assumed a 256px input and
         # silently produced a shape error at any other size.
         side = max(image_size // 8, 1)
-        self.fc1 = nn.Linear(64 * side * side, 64)
+        # The conditioning vector joins the flattened image features, which
+        # is where the original put the species one-hot. Late enough that
+        # the convolutions stay a pure image encoder, early enough that two
+        # fully connected layers can use it.
+        self.fc1 = nn.Linear(64 * side * side + extra, 64)
         self.fc2 = nn.Linear(64, 128)
         self.dropout = nn.Dropout(dropout)
         self.fc3 = nn.Linear(128, outputs)
         self._flat = 64 * side * side
+        self.extra = extra
 
-    def forward(self, x):
+    def forward(self, x, extra=None):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
         x = x.view(-1, self._flat)
+        if self.extra:
+            if extra is None:
+                raise ValueError(
+                    "This network was built to be told something about the "
+                    "sample and was handed nothing."
+                )
+            x = torch.cat((x, extra), dim=1)
         x = F.relu(self.fc1(x))
         x = self.dropout(F.relu(self.fc2(x)))
         return self.fc3(x)
 
 
 class _Images(Dataset):
-    def __init__(self, paths, targets, transform):
+    """Images, optionally with what the model is told about each one."""
+
+    def __init__(self, paths, targets, transform, extras=None):
         self.paths = list(paths)
         self.targets = targets
         self.transform = transform
+        #: Resolved up front rather than per batch: a missing feature is a
+        #: refusal, and a refusal raised inside a worker process surfaces
+        #: as a DataLoader crash with the reason two stack traces away.
+        self.extras = extras
 
     def __len__(self) -> int:
         return len(self.paths)
 
     def __getitem__(self, idx):
         image = self.transform(Image.open(self.paths[idx]).convert("RGB"))
+        extra = (
+            torch.tensor(self.extras[idx], dtype=torch.float32)
+            if self.extras is not None
+            else torch.zeros(0)
+        )
         if self.targets is None:
-            return image
-        return image, self.targets[idx]
+            return image, extra
+        return image, extra, self.targets[idx]
 
 
 class PlantDiseaseClassifier(Model):
@@ -121,8 +158,8 @@ class PlantDiseaseClassifier(Model):
         num_workers: int = 0,
         device: str | None = None,
     ):
-        if arm not in ("flat", "disease"):
-            raise ValueError(f"Unknown arm {arm!r}; expected 'flat' or 'disease'")
+        if arm not in ARMS:
+            raise ValueError(f"Unknown arm {arm!r}; expected one of {', '.join(ARMS)}")
         self.arm = arm
         #: What the project asked for. Kept apart from :attr:`arm` because
         #: :meth:`load` adopts the checkpoint's arm — it has to, since a
@@ -179,11 +216,41 @@ class PlantDiseaseClassifier(Model):
     def _encode(self, values: list[str]) -> str | None:
         """The one thing this arm is learning to say about a sample."""
         found_species, target = self._split(values)
-        if self.arm == "disease":
+        if self.arm in ("disease", "conditioned"):
             return target
         if found_species is None:
             return target
         return f"{found_species}{_PAIR_SEP}{target}" if target else None
+
+    def _species_index(self) -> dict[str, int]:
+        return {name: i for i, name in enumerate(self.species)}
+
+    def _conditioning(self, features: dict | None) -> list[float]:
+        """One sample's species as a one-hot, or a refusal.
+
+        Not a zero vector when the species is unknown. A zero vector is a
+        vector — the network reads it as "none of the fourteen", learns
+        against that, and reports a number for a model that was quietly
+        told something false. Missing is missing, and the caller decides
+        what to do about it.
+        """
+        value = (features or {}).get(SPECIES)
+        if isinstance(value, (list, tuple)):
+            value = value[0] if value else None
+        if value is None:
+            raise ValueError(
+                f"This arm needs a {SPECIES!r} feature and this sample has none. "
+                f"Declare it under [[data.features]], and check the feature set "
+                f"covers the project's collections."
+            )
+        index = self._species_index().get(value)
+        if index is None:
+            raise ValueError(
+                f"Species {value!r} is not one of the {len(self.species)} this "
+                f"model was configured with. [model.params] species and the "
+                f"feature's label set have drifted apart."
+            )
+        return [1.0 if i == index else 0.0 for i in range(len(self.species))]
 
     def _decode(self, token: str) -> list[str]:
         """A head position back into the class names it asserts."""
@@ -211,6 +278,15 @@ class PlantDiseaseClassifier(Model):
             )
         self.classes = list(classes)
 
+        conditioned = self.arm == "conditioned"
+        if conditioned and not self.species:
+            # Before the ambiguity guard below, which would also fire and
+            # would name the symptom rather than the cause.
+            raise ValueError(
+                "The 'conditioned' arm is told the species, so it needs the "
+                "list of them: set [model.params] species."
+            )
+
         # Without a species list there is nothing separating the two halves
         # of a target, and _split would take whichever came first. On this
         # corpus that is the species, so the round trains a species
@@ -229,8 +305,15 @@ class PlantDiseaseClassifier(Model):
                     f"[model.params] species."
                 )
 
-        encoded = [(e.path, self._encode(e.target.values)) for e in train]
-        usable = [(p, t) for p, t in encoded if t is not None]
+        encoded = [
+            (
+                e.path,
+                self._encode(e.target.values),
+                self._conditioning(e.features) if conditioned else None,
+            )
+            for e in train
+        ]
+        usable = [(p, t, x) for p, t, x in encoded if t is not None]
         # A sample whose target this arm cannot represent is dropped rather
         # than encoded as position zero, which is a real class.
         dropped = len(encoded) - len(usable)
@@ -242,18 +325,28 @@ class PlantDiseaseClassifier(Model):
             )
 
         if not self.vocab:
-            self.vocab = sorted({t for _, t in usable})
+            self.vocab = sorted({t for _, t, _ in usable})
         index = {token: i for i, token in enumerate(self.vocab)}
         # Keep a loaded network when it still fits what is being learned;
         # that is the whole of a warm start. Rebuilding here unconditionally
         # meant a warm round trained from scratch and said nothing about it,
         # which reads in the run store as a warm start that did not help.
-        if self.net is None or self.net.fc3.out_features != len(self.vocab):
-            self.net = _Net(len(self.vocab), self.image_size, self.dropout)
+        width = len(self.species) if conditioned else 0
+        if (
+            self.net is None
+            or self.net.fc3.out_features != len(self.vocab)
+            or self.net.extra != width
+        ):
+            self.net = _Net(len(self.vocab), self.image_size, self.dropout, extra=width)
         self.net = self.net.to(self.device)
 
         loader = DataLoader(
-            _Images([p for p, _ in usable], [index[t] for _, t in usable], self._transform()),
+            _Images(
+                [p for p, _, _ in usable],
+                [index[t] for _, t, _ in usable],
+                self._transform(),
+                extras=[x for _, _, x in usable] if conditioned else None,
+            ),
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
@@ -267,10 +360,11 @@ class PlantDiseaseClassifier(Model):
         for epoch in range(self.epochs):
             self.net.train()
             total_loss = correct = seen = 0.0
-            for images, targets in loader:
+            for images, extras, targets in loader:
                 images, targets = images.to(self.device), targets.to(self.device)
+                extras = extras.to(self.device) if conditioned else None
                 optimiser.zero_grad()
-                outputs = self.net(images)
+                outputs = self.net(images, extras)
                 loss = loss_fn(outputs, targets)
                 loss.backward()
                 optimiser.step()
@@ -295,45 +389,81 @@ class PlantDiseaseClassifier(Model):
         return metrics
 
     def _validate(self, val: list[Example]) -> dict[str, float]:
-        encoded = [(e.path, self._encode(e.target.values)) for e in val]
-        usable = [(p, t) for p, t in encoded if t is not None and t in set(self.vocab)]
+        conditioned = self.arm == "conditioned"
+        known = set(self.vocab)
+        encoded = [
+            (
+                e.path,
+                self._encode(e.target.values),
+                self._conditioning(e.features) if conditioned else None,
+            )
+            for e in val
+        ]
+        usable = [(p, t, x) for p, t, x in encoded if t is not None and t in known]
         if not usable:
             return {}
         index = {token: i for i, token in enumerate(self.vocab)}
         loader = DataLoader(
-            _Images([p for p, _ in usable], [index[t] for _, t in usable], self._transform()),
+            _Images(
+                [p for p, _, _ in usable],
+                [index[t] for _, t, _ in usable],
+                self._transform(),
+                extras=[x for _, _, x in usable] if conditioned else None,
+            ),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
         self.net.eval()
         correct = seen = 0.0
         with torch.no_grad():
-            for images, targets in loader:
+            for images, extras, targets in loader:
                 images, targets = images.to(self.device), targets.to(self.device)
-                correct += (self.net(images).argmax(1) == targets).sum().item()
+                extras = extras.to(self.device) if conditioned else None
+                correct += (self.net(images, extras).argmax(1) == targets).sum().item()
                 seen += targets.size(0)
         return {"val_accuracy": correct / max(seen, 1), "val_samples": float(len(usable))}
 
     # -- prediction -----------------------------------------------------
 
     def predict(
-        self, paths: list[Path], on_batch: BatchReport | None = None
+        self,
+        paths: list[Path],
+        on_batch: BatchReport | None = None,
+        *,
+        features: list[dict] | None = None,
     ) -> list[ChoicesPrediction]:
         if not paths:
             return []
         if self.net is None:
             raise ValueError("This model has not been trained or loaded")
 
+        conditioned = self.arm == "conditioned"
+        extras = None
+        if conditioned:
+            if features is None or len(features) != len(paths):
+                raise ValueError(
+                    f"This arm is told the species at inference, so it needs one "
+                    f"feature entry per path — got "
+                    f"{0 if features is None else len(features)} for {len(paths)}."
+                )
+            extras = [self._conditioning(f) for f in features]
+
         loader = DataLoader(
-            _Images(paths, None, self._transform()),
+            _Images(paths, None, self._transform(), extras=extras),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
         self.net.eval()
         out: list[ChoicesPrediction] = []
         with torch.no_grad():
-            for images in loader:
-                probabilities = torch.softmax(self.net(images.to(self.device)), dim=1)
+            for images, batch_extras in loader:
+                probabilities = torch.softmax(
+                    self.net(
+                        images.to(self.device),
+                        batch_extras.to(self.device) if conditioned else None,
+                    ),
+                    dim=1,
+                )
                 best = probabilities.argmax(1)
                 for row, position in zip(probabilities, best):
                     names = self._decode(self.vocab[int(position)])

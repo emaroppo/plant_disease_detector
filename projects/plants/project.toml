@@ -63,6 +63,17 @@ root = "data/raw"
 # question entirely.
 preparer = "plantvillage"
 
+# What the model is told about a sample besides its pixels.
+#
+# Species lives in a label set of its own — `plant-species`, landed from the
+# folder names. That set is the target of a species-identification project
+# and the feature of this one, at the same time, over one catalog. Only
+# these three lines differ between the two readings.
+[[data.features]]
+name = "species"
+source = "label_set"
+ref = "plant-species"
+
 [catalog]
 # Which catalog on this host, by the name it has in config.toml. Stated
 # rather than left to the host's default: a project moved to another machine
@@ -80,7 +91,7 @@ ref = "plant-disease"
 # composite the paper used. 'disease' is arm B, the same trunk with no
 # species information at all. They must not be compared on one axis — the
 # class counts differ, so the gap between them is arithmetic.
-arm = "disease"
+arm = "conditioned"
 # The species half of the label set, restated because the label set cannot
 # say which of its 35 classes are species. Kept in the same order as the
 # classes list above, so a diff shows a drift between the two.
