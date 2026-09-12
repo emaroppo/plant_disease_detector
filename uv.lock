@@ -1391,6 +1391,9 @@ dashboard = [
     { name = "strata-labeller" },
     { name = "streamlit" },
 ]
+experiment = [
+    { name = "strata-experiment" },
+]
 model = [
     { name = "strata-modelling", extra = ["image"] },
 ]
@@ -1412,13 +1415,14 @@ requires-dist = [
     { name = "strata-catalog", editable = "../../tools/auto-labeller/packages/catalog" },
     { name = "strata-catalog", extras = ["s3"], marker = "extra == 's3'", editable = "../../tools/auto-labeller/packages/catalog" },
     { name = "strata-catalog", extras = ["test"], marker = "extra == 'test'", editable = "../../tools/auto-labeller/packages/catalog" },
+    { name = "strata-experiment", marker = "extra == 'experiment'", editable = "../../tools/auto-labeller/packages/experiment" },
     { name = "strata-labeller", marker = "extra == 'cli'", editable = "../../tools/auto-labeller/packages/labeller" },
     { name = "strata-labels", editable = "../../tools/auto-labeller/packages/labels" },
     { name = "strata-modelling", extras = ["image"], marker = "extra == 'model'", editable = "../../tools/auto-labeller/packages/modelling" },
     { name = "strata-modelling", extras = ["test"], marker = "extra == 'test'", editable = "../../tools/auto-labeller/packages/modelling" },
     { name = "streamlit", marker = "extra == 'dashboard'", specifier = ">=1.40" },
 ]
-provides-extras = ["model", "cli", "s3", "dashboard", "test"]
+provides-extras = ["model", "cli", "s3", "experiment", "dashboard", "test"]
 
 [[package]]
 name = "platformdirs"
@@ -2048,6 +2052,7 @@ source = { editable = "../../tools/auto-labeller/packages/catalog" }
 dependencies = [
     { name = "alembic" },
     { name = "sqlalchemy" },
+    { name = "strata-common", extra = ["migrations"] },
     { name = "strata-labels" },
 ]
 
@@ -2067,10 +2072,57 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.2" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
     { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "strata-common", extras = ["migrations"], editable = "../../tools/auto-labeller/packages/common" },
+    { name = "strata-common", extras = ["service"], marker = "extra == 'serve'", editable = "../../tools/auto-labeller/packages/common" },
     { name = "strata-labels", editable = "../../tools/auto-labeller/packages/labels" },
     { name = "uvicorn", marker = "extra == 'serve'", specifier = ">=0.29" },
 ]
 provides-extras = ["s3", "serve", "postgres", "test"]
+
+[[package]]
+name = "strata-common"
+version = "0.1.0"
+source = { editable = "../../tools/auto-labeller/packages/common" }
+
+[package.optional-dependencies]
+migrations = [
+    { name = "alembic" },
+    { name = "sqlalchemy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", marker = "extra == 'migrations'", specifier = ">=1.13" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+    { name = "sqlalchemy", marker = "extra == 'migrations'", specifier = ">=2.0" },
+    { name = "uvicorn", marker = "extra == 'service'", specifier = ">=0.20" },
+]
+provides-extras = ["migrations", "service", "test"]
+
+[[package]]
+name = "strata-experiment"
+version = "0.1.0"
+source = { editable = "../../tools/auto-labeller/packages/experiment" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "strata-catalog" },
+    { name = "strata-common" },
+    { name = "strata-labeller" },
+    { name = "strata-labels" },
+    { name = "strata-modelling" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+    { name = "strata-catalog", editable = "../../tools/auto-labeller/packages/catalog" },
+    { name = "strata-common", editable = "../../tools/auto-labeller/packages/common" },
+    { name = "strata-labeller", editable = "../../tools/auto-labeller/packages/labeller" },
+    { name = "strata-labels", editable = "../../tools/auto-labeller/packages/labels" },
+    { name = "strata-modelling", editable = "../../tools/auto-labeller/packages/modelling" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "strata-labeller"
@@ -2113,12 +2165,14 @@ source = { editable = "../../tools/auto-labeller/packages/modelling" }
 dependencies = [
     { name = "alembic" },
     { name = "sqlalchemy" },
+    { name = "strata-common", extra = ["migrations"] },
     { name = "strata-labels" },
 ]
 
 [package.optional-dependencies]
 image = [
     { name = "pillow" },
+    { name = "rich" },
     { name = "timm" },
     { name = "torch" },
     { name = "torchvision" },
@@ -2133,8 +2187,12 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'service'", specifier = ">=0.100" },
     { name = "pillow", marker = "extra == 'image'", specifier = ">=10.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+    { name = "rich", marker = "extra == 'image'", specifier = ">=13.0" },
+    { name = "rich", marker = "extra == 'text'", specifier = ">=13.0" },
     { name = "sqlalchemy", specifier = ">=2.0" },
     { name = "strata-catalog", marker = "extra == 'service'", editable = "../../tools/auto-labeller/packages/catalog" },
+    { name = "strata-common", extras = ["migrations"], editable = "../../tools/auto-labeller/packages/common" },
+    { name = "strata-common", extras = ["service"], marker = "extra == 'service'", editable = "../../tools/auto-labeller/packages/common" },
     { name = "strata-labels", editable = "../../tools/auto-labeller/packages/labels" },
     { name = "strata-modelling", extras = ["image", "text"], marker = "extra == 'all'" },
     { name = "timm", marker = "extra == 'image'", specifier = ">=1.0" },

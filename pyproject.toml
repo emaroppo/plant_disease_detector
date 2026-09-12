@@ -17,8 +17,11 @@ model = ["strata-modelling[image]"]
 cli = ["strata-labeller"]
 # Shared storage. The base install keeps blobs as files under the catalog
 # root and needs nothing, which is what makes a fresh clone runnable; this
-# is what 'catalog-repack' needs to put them in a bucket instead.
+# is what 'strata-catalog repack' needs to put them in a bucket instead.
 s3 = ["strata-catalog[s3]"]
+# Running an experiment file over this project: a grid over the model's
+# parameters, scored on a holdout, every stage recorded.
+experiment = ["strata-experiment"]
 # The dashboard. Reads the CLI's JSON rather than the run store, so it needs
 # the CLI too — and nothing here is imported by the plugins.
 dashboard = ["streamlit>=1.40", "altair>=5.0", "pandas>=2.0", "plant-disease-detector[cli]"]
@@ -46,6 +49,10 @@ strata-labels = { path = "../../tools/auto-labeller/packages/labels", editable =
 strata-catalog = { path = "../../tools/auto-labeller/packages/catalog", editable = true }
 strata-modelling = { path = "../../tools/auto-labeller/packages/modelling", editable = true }
 strata-labeller = { path = "../../tools/auto-labeller/packages/labeller", editable = true }
+# Not depended on directly: the catalog and modelling depend on it, and a
+# path source is how uv finds an unpublished package they name.
+strata-common = { path = "../../tools/auto-labeller/packages/common", editable = true }
+strata-experiment = { path = "../../tools/auto-labeller/packages/experiment", editable = true }
 
 [build-system]
 requires = ["hatchling"]
