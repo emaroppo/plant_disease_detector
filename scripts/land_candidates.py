@@ -27,9 +27,9 @@ from collections import Counter
 from pathlib import Path
 
 from sqlalchemy import select
-from strata.catalog import tables as t
-from strata.catalog.blobs import checksum_of
-from strata.catalog.prepared import PreparedIndex
+from strata.catalog.index import tables as t
+from strata.catalog.storage.blobs import checksum_of
+from strata.catalog.types.prepared import PreparedIndex
 from strata.labeller.cli import _catalog_for
 from strata.labeller.config import Settings
 from strata.labeller.project import Project
@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
 
     settings = Settings.load(args.config)
     catalog, _root = _catalog_for(settings, args.config, name=project.catalog.name)
-    label_set_id, _schema = catalog.label_set(project.label_set_name)
+    label_set_id, _schema = catalog.label_sets.get(project.label_set_name)
 
     print("\nBuilding the checksum map...", flush=True)
     by_checksum = checksum_map(catalog)
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     # Not "human": nobody has looked at these. That distinction is the only
     # thing separating a reviewed label from a folder name, and an export
     # overwrites it the moment somebody submits the task.
-    annotated, skipped = catalog.annotate_many(label_set_id, items, source="import")
+    annotated, skipped = catalog.annotations.annotate_many(label_set_id, items, source="import")
     print(f"\nLanded {annotated:,} annotation(s) as source='import'")
     if skipped:
         print(f"  {skipped:,} skipped")

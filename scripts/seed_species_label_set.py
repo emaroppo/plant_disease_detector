@@ -23,7 +23,7 @@ from collections import Counter
 from pathlib import Path
 
 from sqlalchemy import select
-from strata.catalog import tables as t
+from strata.catalog.index import tables as t
 from strata.labels import Choices, ClassificationSchema
 from strata.labeller.cli import _catalog_for
 from strata.labeller.config import Settings
@@ -72,16 +72,16 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        label_set_id, _ = catalog.label_set(SPECIES_SET)
+        label_set_id, _ = catalog.label_sets.get(SPECIES_SET)
         print(f"\nLabel set {SPECIES_SET!r} already exists")
     except Exception:
-        label_set_id = catalog.create_label_set(
+        label_set_id = catalog.label_sets.create(
             SPECIES_SET, ClassificationSchema(classes=classes, multiple=False)
         )
         print(f"\nCreated label set {SPECIES_SET!r} — single-choice, {len(classes)} classes")
 
     items = [(sid, Choices(values=[name])) for sid, name in covered.items()]
-    annotated, skipped = catalog.annotate_many(label_set_id, items, source="import")
+    annotated, skipped = catalog.annotations.annotate_many(label_set_id, items, source="import")
     print(f"Landed {annotated:,} annotation(s) as source='import'")
     if skipped:
         print(f"  {skipped:,} skipped")
