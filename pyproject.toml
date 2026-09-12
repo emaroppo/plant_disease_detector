@@ -45,14 +45,14 @@ plant-disease = "plant_disease.model:PlantDiseaseClassifier"
 # filesystem layout instead. Replaced by version constraints once the packages
 # are split into repos and released.
 [tool.uv.sources]
-strata-labels = { path = "../../tools/auto-labeller/packages/labels", editable = true }
-strata-catalog = { path = "../../tools/auto-labeller/packages/catalog", editable = true }
-strata-modelling = { path = "../../tools/auto-labeller/packages/modelling", editable = true }
-strata-labeller = { path = "../../tools/auto-labeller/packages/labeller", editable = true }
+strata-labels = { path = "../../tools/strata/packages/labels", editable = true }
+strata-catalog = { path = "../../tools/strata/packages/catalog", editable = true }
+strata-modelling = { path = "../../tools/strata/packages/modelling", editable = true }
+strata-labeller = { path = "../../tools/strata/packages/labeller", editable = true }
 # Not depended on directly: the catalog and modelling depend on it, and a
 # path source is how uv finds an unpublished package they name.
-strata-common = { path = "../../tools/auto-labeller/packages/common", editable = true }
-strata-experiment = { path = "../../tools/auto-labeller/packages/experiment", editable = true }
+strata-common = { path = "../../tools/strata/packages/common", editable = true }
+strata-experiment = { path = "../../tools/strata/packages/experiment", editable = true }
 
 [build-system]
 requires = ["hatchling"]
