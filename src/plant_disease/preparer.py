@@ -35,7 +35,7 @@ import shutil
 from pathlib import Path
 from typing import ClassVar, Iterable
 
-from strata.catalog.preparers import Prepared, Preparer
+from strata.catalog.types.preparers import Prepared, Preparer
 from strata.labels import Choices
 
 #: What the leaf mapping is called, looked for above the corpus. Named by

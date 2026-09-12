@@ -3,8 +3,8 @@
 import json
 
 import pytest
-from strata.catalog.preparer_conformance import PreparerContract
-from strata.catalog.preparers import run
+from strata.catalog.types.preparer_conformance import PreparerContract
+from strata.catalog.types.preparers import run
 
 from plant_disease.preparer import LEAF_MAP_NAME, PlantVillagePreparer
 

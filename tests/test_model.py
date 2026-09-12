@@ -3,7 +3,7 @@
 import pytest
 from PIL import Image
 from strata.labels import Choices, ClassificationSchema
-from strata.modelling.conformance import ModelContract
+from strata.modelling.plugins.conformance import ModelContract
 from strata.modelling.model import Example
 
 from plant_disease.model import PlantDiseaseClassifier
