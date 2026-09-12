@@ -508,7 +508,13 @@ class PlantDiseaseClassifier(Model):
         self.species = tuple(payload["species"])
         self.image_size = payload["image_size"]
         self.dropout = payload["dropout"]
-        self.net = _Net(len(self.vocab), self.image_size, self.dropout).to(self.device)
+        # The same width finetune built it with: a conditioned checkpoint
+        # carries the species one-hot's inputs, and a network rebuilt without
+        # them refuses the state dict on its first fully connected layer.
+        width = len(self.species) if self.arm == "conditioned" else 0
+        self.net = _Net(len(self.vocab), self.image_size, self.dropout, extra=width).to(
+            self.device
+        )
         if payload["state_dict"] is not None:
             self.net.load_state_dict(payload["state_dict"])
         self.net.eval()
