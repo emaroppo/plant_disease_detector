@@ -8,13 +8,16 @@ requires-python = ">=3.13"
 dependencies = [
     "strata-catalog",
     "strata-labels",
+    # Brought by the catalog, but named: uv applies a source only to a direct
+    # dependency, and until strata is on an index each needs its source below.
+    "strata-common",
 ]
 
 [project.optional-dependencies]
 model = ["strata-modelling[image]"]
 # Driving the loop. The CLI lives in strata-labeller, which also carries the
 # Label Studio SDK — so a run that never opens Label Studio still installs it.
-cli = ["strata-labeller"]
+cli = ["strata-labeller", "strata-project", "strata-modelling"]
 # Shared storage. The base install keeps blobs as files under the catalog
 # root and needs nothing, which is what makes a fresh clone runnable; this
 # is what 'strata-catalog repack' needs to put them in a bucket instead.
@@ -41,9 +44,9 @@ plant-disease = "plant_disease.model:PlantDiseaseClassifier"
 
 # Where the strata packages come from until they are on an index: their
 # repositories, at main. Replaced by version constraints once they are
-# published. strata-common and strata-project are not depended on directly;
-# the packages that need them name them, and a source is how uv finds an
-# unpublished package they name.
+# published. A source applies only to a direct dependency, which is why
+# strata-common, strata-project and strata-modelling are named above
+# although the packages that need them bring them.
 [tool.uv.sources]
 strata-labels = { git = "https://github.com/emaroppo/strata-labels.git", branch = "main" }
 strata-common = { git = "https://github.com/emaroppo/strata-common.git", branch = "main" }

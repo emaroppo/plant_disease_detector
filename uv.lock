@@ -1378,17 +1378,22 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "strata-catalog" },
+    { name = "strata-common" },
     { name = "strata-labels" },
 ]
 
 [package.optional-dependencies]
 cli = [
     { name = "strata-labeller" },
+    { name = "strata-modelling" },
+    { name = "strata-project" },
 ]
 dashboard = [
     { name = "altair" },
     { name = "pandas" },
     { name = "strata-labeller" },
+    { name = "strata-modelling" },
+    { name = "strata-project" },
     { name = "streamlit" },
 ]
 experiment = [
@@ -1412,14 +1417,17 @@ requires-dist = [
     { name = "pandas", marker = "extra == 'dashboard'", specifier = ">=2.0" },
     { name = "plant-disease-detector", extras = ["cli"], marker = "extra == 'dashboard'" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
-    { name = "strata-catalog", editable = "../../tools/strata/packages/catalog" },
-    { name = "strata-catalog", extras = ["s3"], marker = "extra == 's3'", editable = "../../tools/strata/packages/catalog" },
-    { name = "strata-catalog", extras = ["test"], marker = "extra == 'test'", editable = "../../tools/strata/packages/catalog" },
-    { name = "strata-experiment", marker = "extra == 'experiment'", editable = "../../tools/strata/packages/experiment" },
-    { name = "strata-labeller", marker = "extra == 'cli'", editable = "../../tools/strata/packages/labeller" },
-    { name = "strata-labels", editable = "../../tools/strata/packages/labels" },
-    { name = "strata-modelling", extras = ["image"], marker = "extra == 'model'", editable = "../../tools/strata/packages/modelling" },
-    { name = "strata-modelling", extras = ["test"], marker = "extra == 'test'", editable = "../../tools/strata/packages/modelling" },
+    { name = "strata-catalog", git = "https://github.com/emaroppo/strata-catalog.git?branch=main" },
+    { name = "strata-catalog", extras = ["s3"], marker = "extra == 's3'", git = "https://github.com/emaroppo/strata-catalog.git?branch=main" },
+    { name = "strata-catalog", extras = ["test"], marker = "extra == 'test'", git = "https://github.com/emaroppo/strata-catalog.git?branch=main" },
+    { name = "strata-common", git = "https://github.com/emaroppo/strata-common.git?branch=main" },
+    { name = "strata-experiment", marker = "extra == 'experiment'", git = "https://github.com/emaroppo/strata-experiment.git?branch=main" },
+    { name = "strata-labeller", marker = "extra == 'cli'", git = "https://github.com/emaroppo/strata-labeller.git?branch=main" },
+    { name = "strata-labels", git = "https://github.com/emaroppo/strata-labels.git?branch=main" },
+    { name = "strata-modelling", marker = "extra == 'cli'", git = "https://github.com/emaroppo/strata-modelling.git?branch=main" },
+    { name = "strata-modelling", extras = ["image"], marker = "extra == 'model'", git = "https://github.com/emaroppo/strata-modelling.git?branch=main" },
+    { name = "strata-modelling", extras = ["test"], marker = "extra == 'test'", git = "https://github.com/emaroppo/strata-modelling.git?branch=main" },
+    { name = "strata-project", marker = "extra == 'cli'", git = "https://github.com/emaroppo/strata-project.git?branch=main" },
     { name = "streamlit", marker = "extra == 'dashboard'", specifier = ">=1.40" },
 ]
 provides-extras = ["model", "cli", "s3", "experiment", "dashboard", "test"]
@@ -2048,7 +2056,7 @@ wheels = [
 [[package]]
 name = "strata-catalog"
 version = "0.1.0"
-source = { editable = "../../tools/strata/packages/catalog" }
+source = { git = "https://github.com/emaroppo/strata-catalog.git?branch=main#db532f0fde9aa5abd11d7e88242a6de3b4dca4d3" }
 dependencies = [
     { name = "alembic" },
     { name = "sqlalchemy" },
@@ -2064,25 +2072,10 @@ test = [
     { name = "pytest" },
 ]
 
-[package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = ">=1.13" },
-    { name = "boto3", marker = "extra == 's3'", specifier = ">=1.34" },
-    { name = "fastapi", marker = "extra == 'serve'", specifier = ">=0.110" },
-    { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
-    { name = "sqlalchemy", specifier = ">=2.0" },
-    { name = "strata-common", extras = ["migrations"], editable = "../../tools/strata/packages/common" },
-    { name = "strata-common", extras = ["service"], marker = "extra == 'serve'", editable = "../../tools/strata/packages/common" },
-    { name = "strata-labels", editable = "../../tools/strata/packages/labels" },
-    { name = "uvicorn", marker = "extra == 'serve'", specifier = ">=0.29" },
-]
-provides-extras = ["s3", "serve", "postgres", "test"]
-
 [[package]]
 name = "strata-common"
 version = "0.1.0"
-source = { editable = "../../tools/strata/packages/common" }
+source = { git = "https://github.com/emaroppo/strata-common.git?branch=main#c019315fe3ccb77f965113f223f040498764323a" }
 
 [package.optional-dependencies]
 migrations = [
@@ -2090,78 +2083,45 @@ migrations = [
     { name = "sqlalchemy" },
 ]
 
-[package.metadata]
-requires-dist = [
-    { name = "alembic", marker = "extra == 'migrations'", specifier = ">=1.13" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
-    { name = "sqlalchemy", marker = "extra == 'migrations'", specifier = ">=2.0" },
-    { name = "uvicorn", marker = "extra == 'service'", specifier = ">=0.20" },
-]
-provides-extras = ["migrations", "service", "test"]
-
 [[package]]
 name = "strata-experiment"
 version = "0.1.0"
-source = { editable = "../../tools/strata/packages/experiment" }
+source = { git = "https://github.com/emaroppo/strata-experiment.git?branch=main#ac54408cb2869113b9397a8e5a35555390d66bac" }
 dependencies = [
     { name = "pydantic" },
     { name = "strata-catalog" },
     { name = "strata-common" },
-    { name = "strata-labeller" },
     { name = "strata-labels" },
     { name = "strata-modelling" },
+    { name = "strata-project" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "pydantic", specifier = ">=2.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
-    { name = "strata-catalog", editable = "../../tools/strata/packages/catalog" },
-    { name = "strata-common", editable = "../../tools/strata/packages/common" },
-    { name = "strata-labeller", editable = "../../tools/strata/packages/labeller" },
-    { name = "strata-labels", editable = "../../tools/strata/packages/labels" },
-    { name = "strata-modelling", editable = "../../tools/strata/packages/modelling" },
-]
-provides-extras = ["test"]
 
 [[package]]
 name = "strata-labeller"
 version = "0.1.0"
-source = { editable = "../../tools/strata/packages/labeller" }
+source = { git = "https://github.com/emaroppo/strata-labeller.git?branch=main#ce59c20000d259bf2db56b201b5b736b4e75ffeb" }
 dependencies = [
     { name = "label-studio-sdk" },
     { name = "rich" },
     { name = "strata-catalog" },
     { name = "strata-labels" },
     { name = "strata-modelling" },
+    { name = "strata-project" },
     { name = "typer" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "label-studio-sdk", specifier = ">=1.0" },
-    { name = "rich", specifier = ">=13.0" },
-    { name = "strata-catalog", editable = "../../tools/strata/packages/catalog" },
-    { name = "strata-labels", editable = "../../tools/strata/packages/labels" },
-    { name = "strata-modelling", editable = "../../tools/strata/packages/modelling" },
-    { name = "typer", specifier = ">=0.9" },
 ]
 
 [[package]]
 name = "strata-labels"
 version = "0.1.0"
-source = { editable = "../../tools/strata/packages/labels" }
+source = { git = "https://github.com/emaroppo/strata-labels.git?branch=main#cbed635669365e1bf9b4884c71ba9f7ce06056b1" }
 dependencies = [
     { name = "pydantic" },
 ]
 
-[package.metadata]
-requires-dist = [{ name = "pydantic", specifier = ">=2.0" }]
-
 [[package]]
 name = "strata-modelling"
 version = "0.1.0"
-source = { editable = "../../tools/strata/packages/modelling" }
+source = { git = "https://github.com/emaroppo/strata-modelling.git?branch=main#e3bb2f24d03417e54f4f87a1c4a3d0b1be89c62a" }
 dependencies = [
     { name = "alembic" },
     { name = "sqlalchemy" },
@@ -2181,28 +2141,16 @@ test = [
     { name = "pytest" },
 ]
 
-[package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = ">=1.13" },
-    { name = "fastapi", marker = "extra == 'service'", specifier = ">=0.100" },
-    { name = "pillow", marker = "extra == 'image'", specifier = ">=10.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
-    { name = "rich", marker = "extra == 'image'", specifier = ">=13.0" },
-    { name = "rich", marker = "extra == 'text'", specifier = ">=13.0" },
-    { name = "sqlalchemy", specifier = ">=2.0" },
-    { name = "strata-catalog", marker = "extra == 'service'", editable = "../../tools/strata/packages/catalog" },
-    { name = "strata-common", extras = ["migrations"], editable = "../../tools/strata/packages/common" },
-    { name = "strata-common", extras = ["service"], marker = "extra == 'service'", editable = "../../tools/strata/packages/common" },
-    { name = "strata-labels", editable = "../../tools/strata/packages/labels" },
-    { name = "strata-modelling", extras = ["image", "text"], marker = "extra == 'all'" },
-    { name = "timm", marker = "extra == 'image'", specifier = ">=1.0" },
-    { name = "torch", marker = "extra == 'image'", specifier = ">=2.0" },
-    { name = "torch", marker = "extra == 'text'", specifier = ">=2.0" },
-    { name = "torchvision", marker = "extra == 'image'", specifier = ">=0.15" },
-    { name = "transformers", marker = "extra == 'text'", specifier = ">=4.40" },
-    { name = "uvicorn", marker = "extra == 'service'", specifier = ">=0.20" },
+[[package]]
+name = "strata-project"
+version = "0.1.0"
+source = { git = "https://github.com/emaroppo/strata-project.git?branch=main#2e6b6bd1807c6b6f168e56f2a9b185b402bed4a6" }
+dependencies = [
+    { name = "strata-catalog" },
+    { name = "strata-labels" },
+    { name = "strata-modelling" },
+    { name = "tomlkit" },
 ]
-provides-extras = ["image", "text", "all", "test", "service"]
 
 [[package]]
 name = "streamlit"
@@ -2270,6 +2218,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
+]
+
+[[package]]
+name = "tomlkit"
+version = "0.15.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/96/e07752635b98536177fa1f37671c8f3cdde2e724c6bcf6034b2cfb571565/tomlkit-0.15.1.tar.gz", hash = "sha256:e25bbf38843005246210a12982776f27f99cb9be67160e14434d0c0d21ee1e97", size = 180129, upload-time = "2026-07-17T01:48:04.562Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/13/bc/8c13eb66537dce1d2bd3a57132902f38d0e7f5bb46fa9f4daed9fe9d76ee/tomlkit-0.15.1-py3-none-any.whl", hash = "sha256:177a05aece5a8ca5266fd3c448abb47b8d352f09d477d3ca8332db4d89b24304", size = 49449, upload-time = "2026-07-17T01:48:05.728Z" },
 ]
 
 [[package]]
