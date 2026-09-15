@@ -39,20 +39,19 @@ plantvillage = "plant_disease.preparer:PlantVillagePreparer"
 [project.entry-points."strata.models"]
 plant-disease = "plant_disease.model:PlantDiseaseClassifier"
 
-# Local paths while strata is one unpublished workspace. This is the honest
-# state of the plugin story today: a project outside the workspace cannot
-# depend on strata by name because nothing is published, so it depends on a
-# filesystem layout instead. Replaced by version constraints once the packages
-# are split into repos and released.
+# Where the strata packages come from until they are on an index: their
+# repositories, at main. Replaced by version constraints once they are
+# published. strata-common and strata-project are not depended on directly;
+# the packages that need them name them, and a source is how uv finds an
+# unpublished package they name.
 [tool.uv.sources]
-strata-labels = { path = "../../tools/strata/packages/labels", editable = true }
-strata-catalog = { path = "../../tools/strata/packages/catalog", editable = true }
-strata-modelling = { path = "../../tools/strata/packages/modelling", editable = true }
-strata-labeller = { path = "../../tools/strata/packages/labeller", editable = true }
-# Not depended on directly: the catalog and modelling depend on it, and a
-# path source is how uv finds an unpublished package they name.
-strata-common = { path = "../../tools/strata/packages/common", editable = true }
-strata-experiment = { path = "../../tools/strata/packages/experiment", editable = true }
+strata-labels = { git = "https://github.com/emaroppo/strata-labels.git", branch = "main" }
+strata-common = { git = "https://github.com/emaroppo/strata-common.git", branch = "main" }
+strata-catalog = { git = "https://github.com/emaroppo/strata-catalog.git", branch = "main" }
+strata-modelling = { git = "https://github.com/emaroppo/strata-modelling.git", branch = "main" }
+strata-project = { git = "https://github.com/emaroppo/strata-project.git", branch = "main" }
+strata-labeller = { git = "https://github.com/emaroppo/strata-labeller.git", branch = "main" }
+strata-experiment = { git = "https://github.com/emaroppo/strata-experiment.git", branch = "main" }
 
 [build-system]
 requires = ["hatchling"]
