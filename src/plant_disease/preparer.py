@@ -14,8 +14,9 @@ step under a source of its own.
 already photographed, in groups averaging five and reaching thirty-three.
 Split at random and near-duplicates of one leaf land on both sides, so a
 validation score measures memorisation. The dataset's own authors hit this
-and published the mapping they used; ``group_id`` is how a catalog is told
-about it, and grouping is indivisible across a split.
+and published the mapping they used; the metadata key ``leaf`` is how a
+catalog is told about it, and a version frozen with ``group_by = "leaf"``
+keeps a leaf on one side of its split.
 
 The mapping is joined on **class and key together**, never the key alone.
 2,152 keys are reused across classes — ``rs_hl 6251`` is both
@@ -35,8 +36,8 @@ import shutil
 from pathlib import Path
 from typing import ClassVar, Iterable
 
-from strata.catalog.types.preparers import Prepared, Preparer
 from strata.contracts import Choices
+from strata.prepare import Prepared, Preparer
 
 #: What the leaf mapping is called, looked for above the corpus. Named by
 #: convention rather than configured because a preparer is constructed with
@@ -47,6 +48,10 @@ LEAF_MAP_NAME = "leaf-map.json"
 #: corpus root from ``<root>/<class>/<file>`` with room for one more level,
 #: and bounded so a missing file is not a walk to ``/``.
 _SEARCH_DEPTH = 4
+
+#: The metadata key a photograph's leaf is recorded under, for a project to
+#: name as its ``group_by``. docs/adr/0023
+LEAF = "leaf"
 
 #: What separates species from disease in a class folder, and class from
 #: leaf number in the mapping.
@@ -75,7 +80,7 @@ class PlantVillagePreparer(Preparer):
 
     # -- the conversion -------------------------------------------------
 
-    def prepare(self, source: Path, out_dir: Path) -> Iterable[Prepared]:
+    def prepare(self, source: Path, out_dir: Path, *, root: Path) -> Iterable[Prepared]:
         """One image in, the same image out, with what its folder knew.
 
         The bytes are copied rather than rewritten. A JPEG is already what
@@ -93,14 +98,13 @@ class PlantVillagePreparer(Preparer):
         # a hard link would make an edit to one an edit to both.
         shutil.copyfile(source, target)
 
-        return [
-            Prepared(
-                path=target,
-                metadata=self._metadata_for(folder, source),
-                group_id=self._group_for(source, folder),
-                value=self._value_for(folder),
-            )
-        ]
+        metadata = self._metadata_for(folder, source)
+        leaf = self._group_for(source, folder)
+        if leaf is not None:
+            # Absent rather than null where unknown: an image with no key is
+            # its own group under group_by, which is the honest answer
+            metadata[LEAF] = leaf
+        return [Prepared(path=target, metadata=metadata, value=self._value_for(folder))]
 
     def report(self) -> dict[str, int]:
         """What could not be read off the layout, counted rather than logged."""

@@ -6,9 +6,10 @@ requires-python = ">=3.13"
 # Only what reading a corpus needs. The model brings the framework, under
 # its own extra, so a host that just prepares and ingests installs no torch.
 dependencies = [
-    "strata-catalog",
+    "strata-prepare",
     "strata-contracts",
-    # Brought by the catalog, but named: uv applies a source only to a direct
+    "strata-catalog",
+    # Brought by the others, but named: uv applies a source only to a direct
     # dependency, and until strata is on an index each needs its source below.
     "strata-common",
 ]
@@ -28,10 +29,10 @@ experiment = ["strata-experiment"]
 # The dashboard. Reads the CLI's JSON rather than the run store, so it needs
 # the CLI too — and nothing here is imported by the plugins.
 dashboard = ["streamlit>=1.40", "altair>=5.0", "pandas>=2.0", "plant-disease-detector[cli]"]
-test = ["pytest>=8.0", "strata-catalog[test]", "strata-modelling[test]"]
+test = ["pytest>=8.0", "strata-prepare[test]", "strata-modelling[test]"]
 
-# What this adds to a catalog it is installed beside. Registered the same way
-# the first-party converters are — the point of the exercise is that a project
+# What this adds to strata where it is installed. Registered the same way
+# the first-party preparers are — the point of the exercise is that a project
 # outside the workspace extends it through the same surface.
 [project.entry-points."strata.preparers"]
 plantvillage = "plant_disease.preparer:PlantVillagePreparer"
@@ -51,6 +52,7 @@ plant-disease = "plant_disease.model:PlantDiseaseClassifier"
 strata-contracts = { git = "https://github.com/emaroppo/strata-contracts.git", branch = "main" }
 strata-common = { git = "https://github.com/emaroppo/strata-common.git", branch = "main" }
 strata-catalog = { git = "https://github.com/emaroppo/strata-catalog.git", branch = "main" }
+strata-prepare = { git = "https://github.com/emaroppo/strata-prepare.git", branch = "main" }
 strata-modelling = { git = "https://github.com/emaroppo/strata-modelling.git", branch = "main" }
 strata-project = { git = "https://github.com/emaroppo/strata-project.git", branch = "main" }
 strata-labeller = { git = "https://github.com/emaroppo/strata-labeller.git", branch = "main" }

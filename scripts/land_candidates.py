@@ -29,10 +29,10 @@ from pathlib import Path
 from sqlalchemy import select
 from strata.catalog.index import tables as t
 from strata.catalog.storage.blobs import checksum_of
-from strata.catalog.types.prepared import PreparedIndex
 from strata.labeller.cli import _catalog_for
 from strata.labeller.config import Settings
 from strata.labeller.project import Project
+from strata.prepare import load_index
 
 
 def checksum_map(catalog) -> dict[str, int]:
@@ -54,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     project = Project.load(args.project)
-    index = PreparedIndex.load(project.data_dir)
+    index = load_index(project.data_dir)
     if index is None:
         print(
             f"No prepared corpus under {project.data_dir}; run 'auto-labeller prepare' first.",

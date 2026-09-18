@@ -3,8 +3,8 @@
 import json
 
 import pytest
-from strata.catalog.types.preparer_conformance import PreparerContract
-from strata.catalog.types.preparers import run
+from strata.prepare import run
+from strata.prepare.conformance import PreparerContract
 
 from plant_disease.preparer import LEAF_MAP_NAME, PlantVillagePreparer
 
@@ -105,7 +105,7 @@ def test_it_groups_repeat_shots_of_one_leaf(tmp_path):
     index = run(PlantVillagePreparer(), [source], tmp_path / "out")
 
     (entry,) = index.samples.values()
-    assert entry.group_id == f"{CLASS}:::115.0"
+    assert entry.metadata.get("leaf") == f"{CLASS}:::115.0"
 
 
 def test_a_key_claimed_by_another_class_is_left_ungrouped(tmp_path):
@@ -120,7 +120,7 @@ def test_a_key_claimed_by_another_class_is_left_ungrouped(tmp_path):
     index = run(preparer, [source], tmp_path / "out")
 
     (entry,) = index.samples.values()
-    assert entry.group_id is None
+    assert entry.metadata.get("leaf") is None
     assert preparer.report()["images_with_no_leaf_group"] == 1
 
 
@@ -129,7 +129,7 @@ def test_a_key_the_mapping_does_not_cover_is_its_own_group(tmp_path):
     index = run(PlantVillagePreparer(), [source], tmp_path / "out")
 
     (entry,) = index.samples.values()
-    assert entry.group_id is None
+    assert entry.metadata.get("leaf") is None
 
 
 def test_two_shots_of_one_leaf_share_a_group(tmp_path):
@@ -139,7 +139,7 @@ def test_two_shots_of_one_leaf_share_a_group(tmp_path):
     second = _corpus(root, filename="bbb___RS_Early.B 7554.JPG")
 
     index = run(PlantVillagePreparer(), [first, second], tmp_path / "out")
-    groups = {entry.group_id for entry in index.samples.values()}
+    groups = {entry.metadata.get("leaf") for entry in index.samples.values()}
 
     assert groups == {f"{CLASS}:::115.0"}
 
@@ -149,4 +149,4 @@ def test_no_mapping_at_all_leaves_everything_ungrouped(tmp_path):
     index = run(PlantVillagePreparer(), [source], tmp_path / "out")
 
     (entry,) = index.samples.values()
-    assert entry.group_id is None
+    assert entry.metadata.get("leaf") is None
