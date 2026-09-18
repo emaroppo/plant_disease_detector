@@ -39,3 +39,6 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+
+# Handoff notes: kept locally, never published
+/docs/pick-up-here.md
