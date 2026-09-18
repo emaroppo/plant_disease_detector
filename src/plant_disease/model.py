@@ -43,7 +43,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image, ImageFile
-from strata.labels import ChoicesPrediction, ClassificationSchema
+from strata.contracts import ChoicesPrediction, ClassificationSchema
 from strata.modelling.model import BatchReport, EpochReport, Example, Model
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms

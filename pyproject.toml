@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 # its own extra, so a host that just prepares and ingests installs no torch.
 dependencies = [
     "strata-catalog",
-    "strata-labels",
+    "strata-contracts",
     # Brought by the catalog, but named: uv applies a source only to a direct
     # dependency, and until strata is on an index each needs its source below.
     "strata-common",
@@ -48,7 +48,7 @@ plant-disease = "plant_disease.model:PlantDiseaseClassifier"
 # strata-common, strata-project and strata-modelling are named above
 # although the packages that need them bring them.
 [tool.uv.sources]
-strata-labels = { git = "https://github.com/emaroppo/strata-labels.git", branch = "main" }
+strata-contracts = { git = "https://github.com/emaroppo/strata-contracts.git", branch = "main" }
 strata-common = { git = "https://github.com/emaroppo/strata-common.git", branch = "main" }
 strata-catalog = { git = "https://github.com/emaroppo/strata-catalog.git", branch = "main" }
 strata-modelling = { git = "https://github.com/emaroppo/strata-modelling.git", branch = "main" }

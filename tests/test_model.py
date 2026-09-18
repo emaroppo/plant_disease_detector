@@ -2,7 +2,7 @@
 
 import pytest
 from PIL import Image
-from strata.labels import Choices, ClassificationSchema
+from strata.contracts import Choices, ClassificationSchema
 from strata.modelling.plugins.conformance import ModelContract
 from strata.modelling.model import Example
 

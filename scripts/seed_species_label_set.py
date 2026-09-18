@@ -24,7 +24,7 @@ from pathlib import Path
 
 from sqlalchemy import select
 from strata.catalog.index import tables as t
-from strata.labels import Choices, ClassificationSchema
+from strata.contracts import Choices, ClassificationSchema
 from strata.labeller.cli import _catalog_for
 from strata.labeller.config import Settings
 from strata.labeller.project import Project
