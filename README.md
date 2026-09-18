@@ -15,8 +15,7 @@ strata gained a way to say it.
 
 It turned up 23 findings, six of which became fixes in strata — four of
 them bugs that only appear at scale, and one a whole missing capability.
-They are written up in [`docs/pick-up-here.md`](docs/pick-up-here.md) and
-are the more interesting output.
+Those fixes are the more interesting output.
 
 ## Results
 
@@ -122,7 +121,6 @@ src/plant_disease/
 projects/plants/       the labelling job: label set, features, model params
 scripts/               fetch the corpus, land its labels, seed the species set
 dashboard.py           rounds, curves and the dataset
-docs/pick-up-here.md   what the port found
 ```
 
 ## History
